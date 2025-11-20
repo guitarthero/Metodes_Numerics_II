@@ -15,3 +15,5 @@ plt.tick_params(axis='y', direction='in', left=True, right=True)
 plt.legend(loc='upper left', fontsize="small")
 plt.grid(True, linestyle='dotted', color='gray',alpha=0.3)
 plt.show()
+
+print('patata')
