@@ -15,3 +15,5 @@ vectr_de_vectors = np.zeros((N, M))
 #N es num de vecs i M dimensió
 
 print(vectr_de_vectors)
+#implementem euler 
+
