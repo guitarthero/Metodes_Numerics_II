@@ -8,6 +8,21 @@ plt.rcParams.update({
     "text.usetex": True,
     "font.family": "Computer Modern"})
 
+#Funció que implementa el mètode de Gauss-Seidel: AT_i = B
+def gauss_seidel(A, B, T_i, max_iter=1000, tolerancia=1e-6):
+    n = len(B)
+    for iteration in range(max_iter):
+        T_i1 = np.zeros(n)
+        T_i1[0] = (1/A[0,0])*(B[0] - np.dot(A[0,1:],T_i[1:]))
+        for index in range(1,n):
+            T_i1[index] = (1/A[index,index])*(B[index] - np.dot(A[index,:index],T_i1[:index])-
+                                            np.dot(A[index,index+1:],T_i[index+1:]))
+        error= la.norm(T_i-T_i1)
+        if error<tolerancia:
+            break
+        T_i = T_i1.copy()
+    return T_i
+
 #Paràmetres físics del problema
 c_v = 3686  # J/(kg·K)
 rho = 1081  # kg/m³
@@ -66,21 +81,12 @@ sol_T = np.zeros((m,n))
 sol_T[0,:] = T_i.copy()
 for temps in range(1,m):
     B = A2 @ T_i + Dt * np.ones(n)
-    # Implementem el mètode de Gauss-Seidel. Sistema lineal A1*T^{temps+Dt} = B^{temps}
+    # Sistema lineal A1*T^{temps+Dt} = B^{temps}
     # Fixem temps constant: A1*T' = B
-    for iteration in range(100):
-        T_iterat = np.zeros(n)
-        T_iterat[0] = (1/A1[0,0])*(B[0] - np.dot(A1[0,1:],T_i[1:]))
-        for index in range(1,n):
-            T_iterat[index] = (1/A1[index,index])*(B[index] - np.dot(A1[index,:index],T_iterat[:index])-
-                                            np.dot(A1[index,index+1:],T_i[index+1:]))
-        error = (np.abs(T_i-T_iterat)).max()
-        T_i = T_iterat.copy()
-        # Aproximem l'error a partir de l'estabilitat de la solució
-        if error<1e-6: #Precisió desitjada
-            break
-    T_i[0] = T_c  #Condició de contorn
-    T_i[-1] = T_c  #Condició de contorn
+    T_i = gauss_seidel(A1, B, T_i, max_iter=1000, tolerancia=1e-6)
+    #Fixem els extrems a la condició de contorn
+    T_i[0] = T_c
+    T_i[-1] = T_c
     sol_T[temps,:] = T_i.copy()
 
 plt.plot(2*np.linspace(0,1,n), sol_T[0,:]*Temp0-273.15, label='0')
