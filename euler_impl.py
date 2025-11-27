@@ -42,8 +42,6 @@ matriu_identitat = np.eye(N)
 matriu_diagonal = np.eye(N) * element
 matriu_sup = -np.eye(N, k=1)
 matriu_inf = -np.eye(N, k=-1)
-print("Usando np.eye:")
-print(matriu_inf)
 M = matriu_diagonal + matriu_inf + matriu_sup
 
 A_1 = gamma_1 * M + matriu_identitat
