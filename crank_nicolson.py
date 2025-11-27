@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.linalg as la
-from scipy.linalg import block_diag
 import matplotlib.pyplot as plt
 #Visualització amb LaTeX dels gràfics
 plt.rcParams.update({
