@@ -44,6 +44,7 @@ matriu_sup = -np.eye(N, k=1)
 matriu_inf = -np.eye(N, k=-1)
 M = matriu_diagonal + matriu_inf + matriu_sup
 
+
 A_1 = gamma_1 * M + matriu_identitat
 A_2 = gamma_2 * M + matriu_identitat
 
@@ -80,19 +81,12 @@ def euler_implicit(N_temps, gamma, DeltaT, C):
 
     #creem el vector que suma al final de b i és sempre el mateix
     Q = np.ones(N) * DeltaT
-    #per al primer pas, hem vist que és un calcul directe
-    T_nou = (matriu_identitat - gamma * M) @ T_actual + Q
-    #condicions de contorn!!!
-    T_nou[0] = T_0
-    T_nou[-1] = T_0
-    T_history[1,:] = T_nou
     
-    #actualitzem els valors per a les següent iteracions
-    T_anterior = T_actual.copy() #emmagatzemem el pas n-1, doncs per n+1 el necessitem
-    T_actual = T_nou.copy()
+    
+    
     #ara fem per a passos temporals posteriors
-    for n in range(2, N_temps):
-        b = (matriu_identitat - gamma * M) @ T_anterior + 2 * Q
+    for n in range(1, N_temps):
+        b = (matriu_identitat) @ T_actual +  Q
         T_nou = gauss_seidel(C, b, T_actual)
         #condicionsd de contorn
         T_nou[0] = T_0
@@ -102,7 +96,7 @@ def euler_implicit(N_temps, gamma, DeltaT, C):
         T_history[n, :] = T_nou
 
         #actualitzem els valors per al següent pas
-        T_anterior = T_actual.copy()
+        
         T_actual = T_nou.copy()
     return T_history
 
@@ -135,30 +129,7 @@ temps_reals_2 = temps_indices_2 * DeltaT_2 * t_0
 
 #fem els plots per visualitzar els resultats
 # GRÀFICA PER AL CAS 1 (Δt = Δx²)
-plt.figure()
 
-
-plt.plot(x_cm, temperatura_data_1[0], linewidth=2, marker='o', markersize=3, label=f't = {temps_reals_1[0]:.4f} s')
-plt.plot(x_cm, temperatura_data_1[1], linewidth=2, marker='o', markersize=3, label=f't = {temps_reals_1[1]:.4f} s')
-plt.plot(x_cm, temperatura_data_1[2], linewidth=2, marker='o', markersize=3, label=f't = {temps_reals_1[2]:.4f} s')
-plt.plot(x_cm, temperatura_data_1[3], linewidth=2, marker='o', markersize=3, label=f't = {temps_reals_1[3]:.4f} s')
-plt.plot(x_cm, temperatura_data_1[4], linewidth=2, marker='o', markersize=3, label=f't = {temps_reals_1[4]:.4f} s')
-plt.xlabel('Posició (cm)')
-plt.ylabel('Temperatura (°C)')
-plt.title('Distribució de T per a diferents temps')
-plt.grid(True, alpha=0.3)
-plt.ylim(T_c, np.max(temperatura_data_1) + 5)
-
-plt.grid(True, linestyle='--', alpha=0.6)
-plt.gca().tick_params(axis='x', which='both', top=True, bottom=True, direction='in', labelsize=12)
-plt.gca().tick_params(axis='y', which='both', right=True, left=True, direction='in', labelsize=12)
-
-plt.legend(loc='best', fontsize=12)
-plt.tight_layout()
-plt.show()
-
-
-plt.figure()
 
 
 plt.plot(x_cm, temperatura_data_1[0], linewidth=2, marker='o', markersize=3, label=f't = {temps_reals_1[0]:.4f} s')
