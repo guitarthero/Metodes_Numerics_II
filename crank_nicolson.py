@@ -49,21 +49,10 @@ print('Distància característica l0:', l0, 'm')
 print('Condició de contorn T_c:', T_c_nonorm, 'K')
 print('--------------------')
 
-#Paràmetres de discretització
+#Paràmetres de discretització fixats en tot el programa
 n=101   # Nombre de punts mallat espacial
-t_final = 0.025 #normalitzat
-Dx = 1/(n-1) #normalitzat
-#gamma = Dt/(Dx^2)
-gamma =0.49
-Dt = gamma * Dx**2
-m = int(t_final/Dt)  # Nombre d'iteracions temporals
+t_a = 0.025 #normalitzat
 
-print('Paràmetres de discretització:')
-print('Nombre de punts mallat espacial n:', n)
-print('Pas temporal Dt:', Dt*t0, 's')
-print('Pas espacial Dx:', Dx)
-print('Nombre d\'iteracions temporals m:', m)
-print('--------------------')
 # Definició de matrius usades en els càlculs
 I = np.identity(n)
 M = 2*I + (-1)*np.diag(np.ones(n-1),1) + (-1)*np.diag(np.ones(n-1),-1)
@@ -71,55 +60,80 @@ M = 2*I + (-1)*np.diag(np.ones(n-1),1) + (-1)*np.diag(np.ones(n-1),-1)
 M[0,0:3] = [0,0,0]
 M[-1,-3:] = [0,0,0]
 Q = np.concatenate([np.array([0]),np.ones(n-2),np.array([0])])
-# Matrius per a l'esquema de Euler (ímplicít i explícit)
-E1 = I + gamma * M
-E2 = I - gamma * M
-# Matrius per a l'esquema de Crank-Nicolson
-N1 = I + gamma/2 * M
-N2 = I - gamma/2 * M
 
 # Inicialitzem la temperatura t=0 a T=T_in a tota posicio
-T_i_exp = T_c * np.ones(n)
-T_i_imp = T_c * np.ones(n)
-T_i_cn = T_c * np.ones(n)
+T_inicial = T_c * np.ones(n)
 
-# Esquema d'iteració Euler explícit:
-# T^{temps + Dt} = E2 * T^{temps} + Dt * (0,1,...,1,0) = B^{temps}
-sol_T_exp = np.zeros((m,n))
-sol_T_exp[0,:] = T_i_exp.copy()
+def analitica(gamma, n = 101, t_final = t_a):
+    Dx = 1/(n-1) #normalitzat
+    #gamma = Dt/(Dx^2)
+    gamma =0.49
+    Dt = gamma * Dx**2
+    m = int(t_final/Dt)  # Nombre d'iteracions temporals
 
-# Esquem d'iteració Euler implícit:
-# E1*T^{temps + Dt} = T^{temps - Dt} + Dt * (0,1,...,1,0) = B^{temps}
-sol_T_imp = np.zeros((m,n))
-sol_T_imp[0,:] = T_i_imp.copy()
+    sol_T_an = np.zeros((m,n))
+    for i in range(0,m):
+        for j in range(0,n):
+            sol_T_an[i,j] = T(j*Dx, i*Dt, 100, T_c)
+    return sol_T_an
+def explicit(gamma, T_i = T_inicial, n = 101, t_final = t_a):
+    Dx = 1/(n-1) #normalitzat
+    #gamma = Dt/(Dx^2)
+    gamma =0.49
+    Dt = gamma * Dx**2
+    m = int(t_final/Dt)  # Nombre d'iteracions temporals
 
-# Esquema d'iteració Crank-Nicolson:
-# N1 * T^{temps + Dt} = N2 * T^{temps} + Dt * (0,1,...,1,0) = B^{temps}
-sol_T_cn = np.zeros((m,n))
-sol_T_cn[0,:] = T_i_cn.copy()
+    E2 = I - gamma * M
+    # Esquema d'iteració Euler explícit:
+    # T^{temps + Dt} = E2 * T^{temps} + Dt * (0,1,...,1,0) = B^{temps}
+    sol_T_exp = np.zeros((m,n))
+    sol_T_exp[0,:] = T_i.copy()
+    for temps in range(1,m):
+        T_i = E2 @ T_i + Dt * Q
+        sol_T_exp[temps,:] = T_i.copy()
+    return sol_T_exp
+def implicit(gamma, T_i = T_inicial,  n = 101, t_final = t_a):
+    Dx = 1/(n-1) #normalitzat
+    #gamma = Dt/(Dx^2)
+    gamma =0.49
+    Dt = gamma * Dx**2
+    m = int(t_a/Dt)  # Nombre d'iteracions temporals
 
-for temps in range(1,m):
-    #Euler explícit
-    T_i_exp = E2 @ T_i_exp + Dt * Q
-    #Euler implícit
-    # Sistema lineal E1*T^{temps+Dt} = B^{temps} --> E1*T' = B_imp
-    B_imp = T_i_imp + Dt * Q
-    T_i_imp = gauss_seidel(E1,B_imp,T_i_imp, max_iter=1000)
-    # Crank-Nicolson
-    # Sistema lineal N1*T^{temps+Dt} = B^{temps} --> N1*T' = B_exp
-    B_cn = N2 @ T_i_cn + Dt * Q
-    T_i_cn = gauss_seidel(N1, B_cn, T_i_cn, max_iter=1000)
+    E1 = I + gamma * M
+    # Esquem d'iteració Euler implícit:
+    # E1*T^{temps + Dt} = T^{temps - Dt} + Dt * (0,1,...,1,0) = B^{temps}
+    sol_T_imp = np.zeros((m,n))
+    sol_T_imp[0,:] = T_i.copy()
+    for temps in range(1,m):
+        # Sistema lineal E1*T^{temps+Dt} = B^{temps} --> E1*T' = B_imp
+        B_imp = T_i + Dt * Q
+        T_i = gauss_seidel(E1, B_imp, T_i)
+        sol_T_imp[temps,:] = T_i.copy()
+    return sol_T_imp
+def cranc(gamma, T_i = T_inicial, n = 101, t_final = t_a):
+    Dx = 1/(n-1) #normalitzat
+    #gamma = Dt/(Dx^2)
+    gamma =0.49
+    Dt = gamma * Dx**2
+    m = int(t_a/Dt)  # Nombre d'iteracions temporals
 
+    N1 = I + gamma/2 * M
+    N2 = I - gamma/2 * M
+    # Esquema d'iteració Crank-Nicolson:
+    # N1 * T^{temps + Dt} = N2 * T^{temps} + Dt * (0,1,...,1,0) = B^{temps}
+    sol_T_cn = np.zeros((m,n))
+    sol_T_cn[0,:] = T_i.copy()
+    for temps in range(1,m):
+        # Sistema lineal N1*T^{temps+Dt} = B^{temps} --> N1*T' = B_exp
+        B_cn = N2 @ T_i + Dt * Q
+        T_i = gauss_seidel(N1, B_cn, T_i)
+        sol_T_cn[temps,:] = T_i.copy()
+    return sol_T_cn
+sol_T_an = analitica(0.49)
+sol_T_cn = cranc(0.49)
+sol_T_exp = explicit(0.49)
+sol_T_imp = implicit(0.49)
 
-    sol_T_exp[temps,:] = T_i_exp.copy()
-    sol_T_imp[temps,:] = T_i_imp.copy()
-    sol_T_cn[temps,:] = T_i_cn.copy()
-
-#Calculem la solució analítica en els punts del mallat
-sol_T_an = np.zeros((m,n))
-for i in range(0,m):
-    for j in range(0,n):
-        sol_T_an[i,j] = T(j*Dx,i*Dt,100, T_c)
 plt.plot(2*np.linspace(0,1,n), sol_T_an[-1,:]*Temp0-273.15, label='Analítica', linewidth = 1,color='r')
 plt.plot(2*np.linspace(0,1,n), sol_T_cn[-1,:]*Temp0-273.15, label='Cranc-Nicolson', linewidth = 1,color='g')
 plt.plot(2*np.linspace(0,1,n), sol_T_exp[-1,:]*Temp0-273.15, label='Euler explícit', linewidth = 1,color='blue')
@@ -136,3 +150,4 @@ plt.legend(fontsize=10, loc = 'upper left')
 plt.grid(True, linestyle='dotted', color='gray')
 plt.tight_layout()
 plt.savefig("temperature_distribution.png",dpi=300)
+plt.show()
