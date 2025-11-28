@@ -11,7 +11,7 @@ def T(z,t,i,T0):
         T0+=(4/(np.pi*(2*n+1)))*((1-np.exp(-((2*n+1)**2)*(np.pi**2)*t))/(((2*n+1)**2)*(np.pi**2)))*np.sin(np.pi*z*(2*n+1))
     return T0
 #Funció que implementa el mètode de Gauss-Seidel: AT_i = B
-def gauss_seidel(A, B, T_i, max_iter=1000, tolerancia=1e-6):
+def gauss_seidel(A, B, T_i, max_iter=1000, tolerancia=1e-10):
     n = len(B)
     for iteration in range(max_iter):
         T_i1 = np.zeros(n)
@@ -35,6 +35,7 @@ Vef = 40/np.sqrt(2)  # V
 l0 = 0.02  # m
 t0 = l0**2 / alpha  # s
 Temp0 = Vef**2*sigma/k  # K
+
 #Normalització de les condicions inicials i de contorn
 #EDP normalitzada:  T_t = T_xx + 1
 T_c_nonorm = 273.15 +36.5  # K
@@ -67,9 +68,9 @@ print('--------------------')
 I = np.identity(n)
 M = 2*I + (-1)*np.diag(np.ones(n-1),1) + (-1)*np.diag(np.ones(n-1),-1)
 # Modifiquem la 1a i última fila per incorporar les condicions de contorn
-M[0,0:3] = [-1,2,-1]
-M[-1,-3:] = [-1,2,-1]
-
+M[0,0:3] = [0,0,0]
+M[-1,-3:] = [0,0,0]
+Q = np.concatenate([np.array([0]),np.ones(n-2),np.array([0])])
 # Matrius per a l'esquema de Euler (ímplicít i explícit)
 E1 = I + gamma * M
 E2 = I - gamma * M
@@ -83,41 +84,33 @@ T_i_imp = T_c * np.ones(n)
 T_i_cn = T_c * np.ones(n)
 
 # Esquema d'iteració Euler explícit:
-# T^{temps + Dt} = E2 * T^{temps} + Dt * (1,...,1) = B^{temps}
+# T^{temps + Dt} = E2 * T^{temps} + Dt * (0,1,...,1,0) = B^{temps}
 sol_T_exp = np.zeros((m,n))
 sol_T_exp[0,:] = T_i_exp.copy()
 
 # Esquem d'iteració Euler implícit:
-# E1*T^{temps + Dt} = E2 * T^{temps - Dt} + 2 * Dt * (1,...,1) = B^{temps}
+# E1*T^{temps + Dt} = T^{temps - Dt} + Dt * (0,1,...,1,0) = B^{temps}
 sol_T_imp = np.zeros((m,n))
 sol_T_imp[0,:] = T_i_imp.copy()
 
 # Esquema d'iteració Crank-Nicolson:
-# N1 * T^{temps + Dt} = N2 * T^{temps} + Dt * (1,...,1) = B^{temps}
+# N1 * T^{temps + Dt} = N2 * T^{temps} + Dt * (0,1,...,1,0) = B^{temps}
 sol_T_cn = np.zeros((m,n))
 sol_T_cn[0,:] = T_i_cn.copy()
 
 for temps in range(1,m):
     #Euler explícit
-    T_i_exp = E2 @ T_i_exp + Dt * np.ones(n)
+    T_i_exp = E2 @ T_i_exp + Dt * Q
     #Euler implícit
     # Sistema lineal E1*T^{temps+Dt} = B^{temps} --> E1*T' = B_imp
-    if temps == 1:
-        T_i_imp = E2 @ T_i_imp + Dt * np.ones(n)    # Primera iteració amb Euler explícit per iniciar
-    else:
-        B_imp = E2 @ sol_T_imp[temps-2,:] + 2 * Dt * np.ones(n)
-        T_i_imp = gauss_seidel(E1,B_imp,sol_T_imp[temps-1,:], max_iter=1000, tolerancia=1e-6)
+    B_imp = T_i_imp + Dt * Q
+    T_i_imp = gauss_seidel(E1,B_imp,T_i_imp, max_iter=1000)
     # Crank-Nicolson
     # Sistema lineal N1*T^{temps+Dt} = B^{temps} --> N1*T' = B_exp
-    B_cn = N2 @ T_i_cn + Dt * np.ones(n)
-    T_i_cn = gauss_seidel(N1, B_cn, T_i_cn, max_iter=1000, tolerancia=1e-6)
-    #Fixem els extrems a la condició de contorn
-    T_i_exp[0] = T_c
-    T_i_exp[-1] = T_c
-    T_i_imp[0] = T_c
-    T_i_imp[-1] = T_c
-    T_i_cn[0] = T_c
-    T_i_cn[-1] = T_c
+    B_cn = N2 @ T_i_cn + Dt * Q
+    T_i_cn = gauss_seidel(N1, B_cn, T_i_cn, max_iter=1000)
+
+
     sol_T_exp[temps,:] = T_i_exp.copy()
     sol_T_imp[temps,:] = T_i_imp.copy()
     sol_T_cn[temps,:] = T_i_cn.copy()
@@ -126,27 +119,11 @@ for temps in range(1,m):
 sol_T_an = np.zeros((m,n))
 for i in range(0,m):
     for j in range(0,n):
-        sol_T_an[i,j] = T(j*Dx,i*Dt,20, T_c)
-plt.plot(2*np.linspace(0,1,n), sol_T_an[0,:]*Temp0-273.15, label='0', linewidth = 1,color='r')
-plt.plot(2*np.linspace(0,1,n), sol_T_cn[0,:]*Temp0-273.15, label='0', linewidth = 1,color='g')
-plt.plot(2*np.linspace(0,1,n), sol_T_exp[0,:]*Temp0-273.15, label='0', linewidth = 1,color='blue')
-plt.plot(2*np.linspace(0,1,n), sol_T_imp[0,:]*Temp0-273.15, label='0', linewidth = 1,color='orange')
-plt.plot(2*np.linspace(0,1,n), sol_T_an[m//4,:]*Temp0-273.15, label='$t_a/4$', linewidth = 1,color='r')
-plt.plot(2*np.linspace(0,1,n), sol_T_cn[m//4,:]*Temp0-273.15, label='$t_a/4$', linewidth = 1,color='g')
-plt.plot(2*np.linspace(0,1,n), sol_T_exp[m//4,:]*Temp0-273.15, label='$t_a/4$', linewidth = 1,color='blue')
-plt.plot(2*np.linspace(0,1,n), sol_T_imp[m//4,:]*Temp0-273.15, label='$t_a/4$', linewidth = 1,color='orange')
-plt.plot(2*np.linspace(0,1,n), sol_T_an[m//2,:]*Temp0-273.15, label='$t_a/2$', linewidth = 1,color='r')
-plt.plot(2*np.linspace(0,1,n), sol_T_cn[m//2,:]*Temp0-273.15, label='$t_a/2$', linewidth = 1,color='g')
-plt.plot(2*np.linspace(0,1,n), sol_T_exp[m//2,:]*Temp0-273.15, label='$t_a/2$', linewidth = 1,color='blue')
-plt.plot(2*np.linspace(0,1,n), sol_T_imp[m//2,:]*Temp0-273.15, label='$t_a/2$', linewidth = 1,color='orange')
-plt.plot(2*np.linspace(0,1,n), sol_T_an[3*m//4,:]*Temp0-273.15, label='$3t_a/4$', linewidth = 1,color='red')
-plt.plot(2*np.linspace(0,1,n), sol_T_cn[3*m//4,:]*Temp0-273.15, label='$3t_a/4$', linewidth = 1,color='green')
-plt.plot(2*np.linspace(0,1,n), sol_T_exp[3*m//4,:]*Temp0-273.15, label='$3t_a/4$', linewidth = 1,color='blue')
-plt.plot(2*np.linspace(0,1,n), sol_T_imp[3*m//4,:]*Temp0-273.15, label='$3t_a/4$', linewidth = 1,color='orange')
-plt.plot(2*np.linspace(0,1,n), sol_T_an[-1,:]*Temp0-273.15, label='$t_a$', linewidth = 1,color='r')
-plt.plot(2*np.linspace(0,1,n), sol_T_cn[-1,:]*Temp0-273.15, label='$t_a$', linewidth = 1,color='g')
-plt.plot(2*np.linspace(0,1,n), sol_T_exp[-1,:]*Temp0-273.15, label='$t_a$', linewidth = 1,color='blue')
-plt.plot(2*np.linspace(0,1,n), sol_T_imp[-1,:]*Temp0-273.15, label='$t_a$', linewidth = 1,color='orange')
+        sol_T_an[i,j] = T(j*Dx,i*Dt,100, T_c)
+plt.plot(2*np.linspace(0,1,n), sol_T_an[-1,:]*Temp0-273.15, label='Analítica', linewidth = 1,color='r')
+plt.plot(2*np.linspace(0,1,n), sol_T_cn[-1,:]*Temp0-273.15, label='Cranc-Nicolson', linewidth = 1,color='g')
+plt.plot(2*np.linspace(0,1,n), sol_T_exp[-1,:]*Temp0-273.15, label='Euler explícit', linewidth = 1,color='blue')
+plt.plot(2*np.linspace(0,1,n), sol_T_imp[-1,:]*Temp0-273.15, label='Euler implícit', linewidth = 1,color='orange')
 plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
 plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
 plt.xlim(0,2)
@@ -155,8 +132,7 @@ plt.vlines(1+0.25, ymin=T_c*Temp0-273.15, ymax=55, colors='black', linestyles='-
 plt.hlines(50, xmin=0, xmax=2, colors='red', linestyles='dashed')
 #Detalls estètics del gràfic
 plt.tick_params(axis='both', direction='in', top=True, right=True)
-plt.legend(fontsize=10)
+plt.legend(fontsize=10, loc = 'upper left')
 plt.grid(True, linestyle='dotted', color='gray')
 plt.tight_layout()
 plt.savefig("temperature_distribution.png",dpi=300)
-plt.show()
