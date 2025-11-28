@@ -67,7 +67,6 @@ T_inicial = T_c * np.ones(n)
 def analitica(gamma, n = 101, t_final = t_a):
     Dx = 1/(n-1) #normalitzat
     #gamma = Dt/(Dx^2)
-    gamma =0.49
     Dt = gamma * Dx**2
     m = int(t_final/Dt)  # Nombre d'iteracions temporals
 
@@ -78,8 +77,6 @@ def analitica(gamma, n = 101, t_final = t_a):
     return sol_T_an
 def explicit(gamma, T_i = T_inicial, n = 101, t_final = t_a):
     Dx = 1/(n-1) #normalitzat
-    #gamma = Dt/(Dx^2)
-    gamma =0.49
     Dt = gamma * Dx**2
     m = int(t_final/Dt)  # Nombre d'iteracions temporals
 
@@ -94,8 +91,6 @@ def explicit(gamma, T_i = T_inicial, n = 101, t_final = t_a):
     return sol_T_exp
 def implicit(gamma, T_i = T_inicial,  n = 101, t_final = t_a):
     Dx = 1/(n-1) #normalitzat
-    #gamma = Dt/(Dx^2)
-    gamma =0.49
     Dt = gamma * Dx**2
     m = int(t_a/Dt)  # Nombre d'iteracions temporals
 
@@ -112,8 +107,6 @@ def implicit(gamma, T_i = T_inicial,  n = 101, t_final = t_a):
     return sol_T_imp
 def cranc(gamma, T_i = T_inicial, n = 101, t_final = t_a):
     Dx = 1/(n-1) #normalitzat
-    #gamma = Dt/(Dx^2)
-    gamma =0.49
     Dt = gamma * Dx**2
     m = int(t_a/Dt)  # Nombre d'iteracions temporals
 
@@ -129,25 +122,214 @@ def cranc(gamma, T_i = T_inicial, n = 101, t_final = t_a):
         T_i = gauss_seidel(N1, B_cn, T_i)
         sol_T_cn[temps,:] = T_i.copy()
     return sol_T_cn
-sol_T_an = analitica(0.49)
-sol_T_cn = cranc(0.49)
-sol_T_exp = explicit(0.49)
-sol_T_imp = implicit(0.49)
 
-plt.plot(2*np.linspace(0,1,n), sol_T_an[-1,:]*Temp0-273.15, label='Analítica', linewidth = 1,color='r')
-plt.plot(2*np.linspace(0,1,n), sol_T_cn[-1,:]*Temp0-273.15, label='Cranc-Nicolson', linewidth = 1,color='g')
-plt.plot(2*np.linspace(0,1,n), sol_T_exp[-1,:]*Temp0-273.15, label='Euler explícit', linewidth = 1,color='blue')
-plt.plot(2*np.linspace(0,1,n), sol_T_imp[-1,:]*Temp0-273.15, label='Euler implícit', linewidth = 1,color='orange')
-plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
-plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
-plt.xlim(0,2)
-plt.vlines(1-0.25, ymin=T_c*Temp0-273.15, ymax=55, colors='black', linestyles='-.')
-plt.vlines(1+0.25, ymin=T_c*Temp0-273.15, ymax=55, colors='black', linestyles='-.')
-plt.hlines(50, xmin=0, xmax=2, colors='red', linestyles='dashed')
-#Detalls estètics del gràfic
-plt.tick_params(axis='both', direction='in', top=True, right=True)
-plt.legend(fontsize=10, loc = 'upper left')
-plt.grid(True, linestyle='dotted', color='gray')
-plt.tight_layout()
-plt.savefig("temperature_distribution.png",dpi=300)
-plt.show()
+exacta_1 = analitica(0.51)
+exacta_2 = analitica(0.49)
+exacta_3 = analitica(0.25)
+exacta_4 = analitica(1)
+exacta_5 = analitica(0.5)
+#PART 1: EULER EXPLICIT
+def part_1():
+    explicit_1 = explicit(0.51)
+    plt.plot(2*np.linspace(0,1,n), explicit_1[-1,:]*Temp0-273.15, label = '0.51', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('explicit_51.png', dpi = 300)
+    plt.cla()
+
+    explicit_2 = explicit(0.49)
+    plt.plot(2*np.linspace(0,1,n), explicit_2[-1,:]*Temp0-273.15, label = '0.49', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('explicit_49.png', dpi = 300)
+    plt.cla()
+
+    explicit_3 = explicit(0.25)
+    plt.plot(2*np.linspace(0,1,n), explicit_3[-1,:]*Temp0-273.15, label = '0.25', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('explicit_25.png', dpi = 300)
+    plt.cla()
+
+    e_explicit_1 = np.abs(explicit_1-exacta_1)
+    e_explicit_2 = np.abs(explicit_2-exacta_2)
+    e_explicit_3 = np.abs(explicit_3-exacta_3)
+
+    plt.plot(2*np.linspace(0,1,n), e_explicit_1[-1,:]*Temp0, label = '$\gamma=0.51$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.ylim(bottom=0)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('error_explicit_51.png', dpi = 300)
+    plt.cla()
+
+    plt.plot(2*np.linspace(0,1,n), e_explicit_2[-1,:]*Temp0, label = '$\gamma=0.49$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.ylim(bottom=0)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('error_explicit_49.png', dpi = 300)
+    plt.cla()
+
+    plt.plot(2*np.linspace(0,1,n), e_explicit_3[-1,:]*Temp0, label = '$\gamma=0.25$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.ylim(bottom=0)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('error_explicit_25.png', dpi = 300)
+    plt.cla()
+
+#PART 2: EULER IMPLICIT
+def part_2():
+    implicit_1 = implicit(1)
+    plt.plot(2*np.linspace(0,1,n), implicit_1[-1,:]*Temp0-273.15, label = '$\gamma=1$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('implicit_100.png', dpi = 300)
+    plt.cla()
+
+    implicit_2 = implicit(0.5)
+    plt.plot(2*np.linspace(0,1,n), implicit_2[-1,:]*Temp0-273.15, label = '$\gamma=0.5$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('implicit_50.png', dpi = 300)
+    plt.cla()
+
+    e_implicit_1 = np.abs(implicit_1-exacta_4)
+    e_implicit_2 = np.abs(implicit_2-exacta_5)
+
+    plt.plot(2*np.linspace(0,1,n), e_implicit_1[-1,:]*Temp0, label = '$\gamma=1$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.ylim(bottom=0)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('error_implicit_100.png', dpi = 300)
+    plt.cla()
+
+    plt.plot(2*np.linspace(0,1,n), e_implicit_1[-1,:]*Temp0, label = '$\gamma=0.5$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.ylim(bottom=0)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('error_implicit_50.png', dpi = 300)
+    plt.cla()
+
+#PART 3a: CRANC-NICOLSON
+def part_3a():
+    cranc_1 = cranc(1)
+    plt.plot(2*np.linspace(0,1,n), cranc_1[-1,:]*Temp0-273.15, label = '$\gamma=1$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('cranc_100.png', dpi = 300)
+    plt.cla()
+
+    cranc_2 = cranc(0.5)
+    plt.plot(2*np.linspace(0,1,n), cranc_2[-1,:]*Temp0-273.15, label = '$\gamma=0.5$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('cranc_50.png', dpi = 300)
+    plt.cla()
+
+    e_cranc_1 = np.abs(cranc_1-exacta_4)
+    e_cranc_2 = np.abs(cranc_2-exacta_5)
+
+    plt.plot(2*np.linspace(0,1,n), e_cranc_1[-1,:]*Temp0, label = '$\gamma=1$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.ylim(bottom=0)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('error_cranc_100.png', dpi = 300)
+    plt.cla()
+
+    plt.plot(2*np.linspace(0,1,n), e_cranc_2[-1,:]*Temp0, label = '$\gamma=0.5$', color = 'blue')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.ylim(bottom=0)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig('error_cranc_50.png', dpi = 300)
+    plt.cla()
+
+#PART 3b: Comparativa
+def part_3b():
+    err_T_cn = np.abs(cranc(0.49)-exacta_2)
+    err_T_exp = np.abs(explicit(0.49)-exacta_2)
+    err_T_imp = np.abs(implicit(0.49)-exacta_2)
+
+    plt.plot(2*np.linspace(0,1,n), err_T_cn[-1,:]*Temp0-273.15, label='Cranc-Nicolson', linewidth = 1,color='g')
+    plt.plot(2*np.linspace(0,1,n), err_T_exp[-1,:]*Temp0-273.15, label='Euler explícit', linewidth = 1,color='blue')
+    plt.plot(2*np.linspace(0,1,n), err_T_imp[-1,:]*Temp0-273.15, label='Euler implícit', linewidth = 1,color='orange')
+    plt.xlabel('Distància del primer electròde, $x$ [m]',fontsize=13)
+    plt.ylabel('Temperatura [$^\circ$C]',fontsize=13)
+    plt.xlim(0,2)
+    plt.tick_params(axis='both', direction='in', top=True, right=True)
+    plt.legend(fontsize=10, loc = 'upper left')
+    plt.grid(True, linestyle='dotted', color='gray')
+    plt.tight_layout()
+    plt.savefig("comparacio_error_49.png",dpi=300)
+    plt.show()
+
+#EXECUTEU AQUI LA PART DE PROGRAMA QUE US INTERESSI (sinó tarda massa)
+part_3b()
